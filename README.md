@@ -4,7 +4,7 @@
 
 # commands:-
 
-- git clone "your-forked-file"
+- git clone `your-forked-file`
 
 - cd PRAVEG
 
@@ -12,7 +12,9 @@
 
 - Whatever domain you are working on, create a folder for it
 
-- git checkout -b "branch-name"
+- open termianl and write => cd `the-folder-you-created`
+
+- git checkout -b "branch-name"  `agar-branch vagera na samajh aaye toh apne ai se puchna ki kya command run kare bcz git switch command bhi hoti hai aur kabhi kho jao toh nhice vali command run kro`
 
 git branch [for-seeing-on-which-branch-you-are-on]
 
@@ -32,7 +34,7 @@ git commit -m "your message"
 
 # after commiting completly 
 
-git push -u origin main 
+git push -u origin `your-branch-name`
 
 `````bash
 never work on main directly even in future
@@ -50,6 +52,6 @@ never work on main directly even in future
 
 ## Team Rule
 
-Before starting new work, always pull the latest `main`.
+Before starting new work, always pull the latest `main`. matlab manlo tum kaam kar rhe ne bethe toh git pull karke dusro ka kamm add kar lena project me.
 
 Do not work directly on `main` unless you are the repository maintainer.
