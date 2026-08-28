@@ -54,4 +54,12 @@ never work on main directly even in future
 
 Before starting new work, always pull the latest `main`. matlab manlo tum kaam kar rhe ne bethe toh git pull karke dusro ka kamm add kar lena project me.
 
+>koi bhi merge tab tak nhi hogi branch jab tak kaam complete nhi hoga alternative ek dusre ki branch access karo aur dusre ka kaam pull karo niche commands run kro 
+
+`````bash
+git fetch origin
+git switch backend
+git pull origin backend
+`````
+
 Do not work directly on `main` unless you are the repository maintainer.
