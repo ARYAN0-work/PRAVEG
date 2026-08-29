@@ -6,10 +6,11 @@ import {
   updateProjectController,
   deleteProjectController
 } from "../controllers/project.controller.js";
+import { validateProjectCreate } from "../validation/project.validation.js";
 
 const router = Router();
 
-router.post("/", createProjectController);
+router.post("/", validateProjectCreate, createProjectController);
 router.get("/", getProjectsController);
 router.get("/:id", getProjectByIdController);
 router.patch("/:id", updateProjectController);
