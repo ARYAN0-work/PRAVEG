@@ -1,5 +1,8 @@
-import { Request, Response } from "express";
-import { createProject } from "../services/project.service.js";
+import type { Request, Response } from "express";
+import {
+  createProject,
+  getProjects,
+} from "../services/project.service.js";
 
 export const createProjectController = async (
   req: Request,
@@ -9,15 +12,37 @@ export const createProjectController = async (
     const project = await createProject(req.body);
 
     res.status(201).json({
-      success: true,
+      status: "success",
       data: project,
     });
   } catch (error) {
-    console.error("Error creating project:", error);
+    console.error(error);
 
     res.status(500).json({
-      success: false,
+      status: "error",
       message: "Failed to create project",
     });
   }
 };
+
+export const getProjectsController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const projects = await getProjects();
+
+    res.status(200).json({
+      status: "success",
+      data: projects,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch projects",
+    });
+  }
+};
+

@@ -17,3 +17,12 @@ export const createProject = async (data: {
     data,
   });
 };
+
+export const getProjects = async () => {
+  return prisma.project.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
+
