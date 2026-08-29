@@ -2,6 +2,7 @@ import express from "express";
 import {prisma} from "./lib/prisma.js";
 import projectRoutes from "./routes/project.routes.js"
 import { errorMiddleware } from "./middeware/error.middleware.js";
+import { notFoundMiddleware } from "./middeware/notFound.middleware.js";
 
 const app = express();
 
@@ -27,6 +28,8 @@ app.get("/health", async (req, res) => {
 });
 
 app.use("/api/projects", projectRoutes);
+
+app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 export default app;
