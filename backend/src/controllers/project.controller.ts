@@ -94,12 +94,23 @@ export const updateProjectController = async (
       data: project,
     });
   } catch (error) {
-    console.error(error);
+  console.error(error);
 
-    res.status(500).json({
+  if (
+    error instanceof Error &&
+    error.message.startsWith("Invalid") 
+  ) {
+    res.status(400).json({
       status: "error",
-      message: "Failed to update project",
+      message: error.message,
     });
+    return;
+  }
+
+  res.status(500).json({
+    status: "error",
+    message: "Failed to update project",
+  });
   }
 };
 

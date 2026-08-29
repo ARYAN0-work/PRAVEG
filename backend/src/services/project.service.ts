@@ -61,10 +61,11 @@ export const updateProject = async (
   const validateTransition = (
     current: string,
     next: string,
-    allowedNext: string[],
+    transitions: Record<string, string[]>,
   ) => {
     if (current === next) return true;
-    return allowedNext.includes(next);
+
+    return transitions[current]?.includes(next) ?? false;
   };
 
   if (
@@ -72,7 +73,11 @@ export const updateProject = async (
     !validateTransition(
       project.compensationStatus,
       data.compensationStatus,
-      ["IN_PROGRESS", "COMPLETED"],
+      {
+        PENDING: ["IN_PROGRESS"],
+        IN_PROGRESS: ["COMPLETED"],
+        COMPLETED: [],
+      },
     )
   ) {
     throw new Error(
@@ -85,7 +90,11 @@ export const updateProject = async (
     !validateTransition(
       project.possessionStatus,
       data.possessionStatus,
-      ["IN_PROGRESS", "COMPLETED"],
+      {
+        PENDING: ["IN_PROGRESS"],
+        IN_PROGRESS: ["COMPLETED"],
+        COMPLETED: [],
+      },
     )
   ) {
     throw new Error(
@@ -98,7 +107,11 @@ export const updateProject = async (
     !validateTransition(
       project.rehabilitationStatus,
       data.rehabilitationStatus,
-      ["IN_PROGRESS", "COMPLETED"],
+      {
+        PENDING: ["IN_PROGRESS"],
+        IN_PROGRESS: ["COMPLETED"],
+        COMPLETED: [],
+      },
     )
   ) {
     throw new Error(
@@ -111,7 +124,11 @@ export const updateProject = async (
     !validateTransition(
       project.approvalStatus,
       data.approvalStatus,
-      ["APPROVED", "REJECTED"],
+      {
+        PENDING: ["APPROVED", "REJECTED"],
+        APPROVED: [],
+        REJECTED: [],
+      },
     )
   ) {
     throw new Error(
