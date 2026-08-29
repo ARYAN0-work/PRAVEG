@@ -2,7 +2,8 @@ import type { Request, Response } from "express";
 import {
   createProject,
   getProjects,
-  getProjectById
+  getProjectById,
+  updateProject
 } from "../services/project.service.js";
 
 export const createProjectController = async (
@@ -77,4 +78,27 @@ export const getProjectByIdController = async (
   }
 };
 
+export const updateProjectController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const project = await updateProject(
+      req.params.id as string,
+      req.body,
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: project,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update project",
+    });
+  }
+};
 

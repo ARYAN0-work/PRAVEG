@@ -34,4 +34,26 @@ export const getProjectById = async (id: string) => {
   });
 };
 
-
+export const updateProject = async (
+  id: string,
+  data: {
+    name?: string;
+    projectType?: string;
+    state?: string;
+    district?: string;
+    landArea?: number;
+    affectedFamilies?: number;
+    compensationStatus?: string;
+    approvalStatus?: string;
+    legalDispute?: boolean;
+    possessionStatus?: string;
+    rehabilitationStatus?: string;
+  },
+) => {
+  return prisma.project.update({
+    where: {
+      id,
+    },
+    data,
+  });
+};
