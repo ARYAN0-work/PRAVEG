@@ -4,7 +4,7 @@
 
 # commands:-
 
-- git clone `your-forked-file`
+- git clone `https://github.com/ARYAN0-work/PRAVEG.git`
 
 - cd PRAVEG
 
