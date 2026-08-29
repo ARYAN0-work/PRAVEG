@@ -79,38 +79,30 @@ export const getProjectByIdController = async (
   }
 };
 
-export const updateProjectController = async (
-  req: Request,
-  res: Response,
-) => {
+export const updateProjectController = async (req :Request, res: Response) => {
   try {
-    const project = await updateProject(
-      req.params.id as string,
-      req.body,
-    );
+    const { id } = req.params;
 
-    res.status(200).json({
+    const project = await updateProject(id as string, req.body);
+
+    if (!project) {
+      return res.status(404).json({
+        status: "error",
+        message: "Project not found",
+      });
+    }
+
+    return res.status(200).json({
       status: "success",
       data: project,
     });
   } catch (error) {
-  console.error(error);
+    console.error(error);
 
-  if (
-    error instanceof Error &&
-    error.message.startsWith("Invalid") 
-  ) {
-    res.status(400).json({
+    return res.status(400).json({
       status: "error",
-      message: error.message,
+      message: error instanceof Error ? error.message : "Failed to update project",
     });
-    return;
-  }
-
-  res.status(500).json({
-    status: "error",
-    message: "Failed to update project",
-  });
   }
 };
 
