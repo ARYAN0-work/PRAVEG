@@ -1,5 +1,6 @@
 import express from "express";
-import {prisma} from "./lib/prisma.js"
+import {prisma} from "./lib/prisma.js";
+import projectRoutes from "./routes/project.routes.js"
 
 const app = express();
 
@@ -23,5 +24,7 @@ app.get("/health", async (req, res) => {
     });
   }
 });
+
+app.use("/api/projects", projectRoutes);
 
 export default app;
