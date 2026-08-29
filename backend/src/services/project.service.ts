@@ -50,6 +50,75 @@ export const updateProject = async (
     rehabilitationStatus?: string;
   },
 ) => {
+  const project = await prisma.project.findUnique({
+    where: { id },
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  const validateTransition = (
+    current: string,
+    next: string,
+    allowedNext: string[],
+  ) => {
+    if (current === next) return true;
+    return allowedNext.includes(next);
+  };
+
+  if (
+    data.compensationStatus &&
+    !validateTransition(
+      project.compensationStatus,
+      data.compensationStatus,
+      ["IN_PROGRESS", "COMPLETED"],
+    )
+  ) {
+    throw new Error(
+      `Invalid compensation status transition: ${project.compensationStatus} → ${data.compensationStatus}`,
+    );
+  }
+
+  if (
+    data.possessionStatus &&
+    !validateTransition(
+      project.possessionStatus,
+      data.possessionStatus,
+      ["IN_PROGRESS", "COMPLETED"],
+    )
+  ) {
+    throw new Error(
+      `Invalid possession status transition: ${project.possessionStatus} → ${data.possessionStatus}`,
+    );
+  }
+
+  if (
+    data.rehabilitationStatus &&
+    !validateTransition(
+      project.rehabilitationStatus,
+      data.rehabilitationStatus,
+      ["IN_PROGRESS", "COMPLETED"],
+    )
+  ) {
+    throw new Error(
+      `Invalid rehabilitation status transition: ${project.rehabilitationStatus} → ${data.rehabilitationStatus}`,
+    );
+  }
+
+  if (
+    data.approvalStatus &&
+    !validateTransition(
+      project.approvalStatus,
+      data.approvalStatus,
+      ["APPROVED", "REJECTED"],
+    )
+  ) {
+    throw new Error(
+      `Invalid approval status transition: ${project.approvalStatus} → ${data.approvalStatus}`,
+    );
+  }
+
   return prisma.project.update({
     where: {
       id,
