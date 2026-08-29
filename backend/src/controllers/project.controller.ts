@@ -3,7 +3,8 @@ import {
   createProject,
   getProjects,
   getProjectById,
-  updateProject
+  updateProject,
+  deleteProject
 } from "../services/project.service.js";
 
 export const createProjectController = async (
@@ -102,3 +103,23 @@ export const updateProjectController = async (
   }
 };
 
+export const deleteProjectController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const project = await deleteProject(req.params.id as string);
+
+    res.status(200).json({
+      status: "success",
+      data: project,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(404).json({
+      status: "error",
+      message: "Project not found",
+    });
+  }
+};
