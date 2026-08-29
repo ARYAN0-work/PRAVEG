@@ -26,3 +26,12 @@ export const getProjects = async () => {
   });
 };
 
+export const getProjectById = async (id: string) => {
+  return prisma.project.findUnique({
+    where: {
+      id,
+    },
+  });
+};
+
+

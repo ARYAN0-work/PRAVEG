@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import {
   createProject,
   getProjects,
+  getProjectById
 } from "../services/project.service.js";
 
 export const createProjectController = async (
@@ -45,4 +46,35 @@ export const getProjectsController = async (
     });
   }
 };
+
+
+export const getProjectByIdController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const project = await getProjectById(req.params.id as string);
+
+    if (!project) {
+      res.status(404).json({
+        status: "error",
+        message: "Project not found",
+      });
+      return;
+    }
+    
+    res.status(200).json({
+      status: "success",
+      data: project,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch project",
+    });
+  }
+};
+
 
