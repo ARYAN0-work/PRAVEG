@@ -7,20 +7,79 @@ datasource db {
 }
 
 model Project {
-  id                 String   @id @default(uuid())
-  name               String
-  projectType        String
-  state              String
-  district            String
-  landArea            Float
-  affectedFamilies   Int
+  id String @id @default(uuid())
 
-  compensationStatus   String   @default("PENDING")
-  approvalStatus       String   @default("PENDING")
-  legalDispute        Boolean   @default(false)
-  possessionStatus     String   @default("PENDING")
-  rehabilitationStatus String   @default("PENDING")
-  
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  // Original Excel identity
+  sourceProjectId String @unique
+
+  name        String
+  projectType String
+  state       String
+
+  landArea         Decimal? @db.Decimal(14, 2)
+  affectedFamilies Int?
+
+  stakeholderResponsiveness Decimal? @db.Decimal(10, 2)
+  historicalPerformance     Decimal? @db.Decimal(10, 2)
+
+  districts     Json?
+  districtCount Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statuses ProjectStatus[]
+
+  @@index([state])
+  @@index([projectType])
+}
+
+model ProjectStatus {
+  id String @id @default(uuid())
+
+  // Original Excel identity
+  sourceProjectId String
+
+  // Original Sheet2 row number.
+  // This preserves duplicate-looking rows from Excel.
+  sourceRowNumber Int
+
+  sourceProjectName String
+  sourceProjectType String
+
+  // Nullable because P068 contains an identity mismatch
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  budgetAllocatedCrore Decimal? @db.Decimal(18, 2)
+
+  // Compensation is mixed in the source:
+  // some rows contain amounts, others contain statuses.
+  compensationAmountCrore Decimal?
+  compensationStatus      String?
+
+  approvalTimelines String?
+  legalDisputes     String?
+
+  // Source contains numeric/progress-style values.
+  possessionStatus Decimal? @db.Decimal(10, 4)
+
+  rehabilitationStatus String?
+  delayStatus          String?
+
+  targetCompletion DateTime?
+
+  // Some rows contain actual Excel dates,
+  // others contain year-only values such as 2023.
+  snapshotDate DateTime?
+  snapshotYear Int?
+
+  createdAt DateTime @default(now())
+
+  // One Excel source row = one unique imported status record.
+  @@unique([sourceProjectId, sourceRowNumber])
+  @@index([sourceProjectId])
+  @@index([projectId])
+  @@index([snapshotDate])
+  @@index([snapshotYear])
 }
