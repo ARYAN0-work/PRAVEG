@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { getProjects } from "../api/projects";
+import { getMockRisk } from "../mocks/mockRiskData";
 import RiskBadge from "../components/RiskBadge";
 import StatusPill from "../components/StatusPill";
 import LoadingState from "../components/LoadingState";
@@ -40,43 +41,55 @@ export default function ProjectList() {
 
   // Adjust field names below (name/state/district/status/riskLevel) to
   // match your actual backend response shape once you confirm it.
-  const states = useMemo(
-    () => [...new Set(projects.map((p) => p.state).filter(Boolean))].sort(),
+  // Same mock risk source as ProjectDetails, so the badge shown here always
+  // matches what you'd see after clicking into the project. Swapping to a
+  // real ML API later only means changing getMockRisk's implementation.
+  const projectsWithRisk = useMemo(
+    () => projects.map((p) => ({ ...p, riskLevel: getMockRisk(p).level })),
     [projects]
   );
 
-  // District options scoped to the selected state.
+  const states = useMemo(
+    () => [...new Set(projectsWithRisk.map((p) => p.state).filter(Boolean))].sort(),
+    [projectsWithRisk]
+  );
+
+  // District options scoped to the selected state. flatMap since each
+  // project can now list multiple districts.
   const districts = useMemo(
     () =>
       [
         ...new Set(
-          projects
+          projectsWithRisk
             .filter((p) => !stateFilter || p.state === stateFilter)
-            .map((p) => p.district)
+            .flatMap((p) => p.district || [])
             .filter(Boolean)
         ),
       ].sort(),
-    [projects, stateFilter]
+    [projectsWithRisk, stateFilter]
   );
 
   const filtered = useMemo(() => {
-    const result = projects.filter((p) => {
+    const result = projectsWithRisk.filter((p) => {
       const matchesSearch = p.name?.toLowerCase().includes(search.toLowerCase());
       const matchesState = !stateFilter || p.state === stateFilter;
-      const matchesDistrict = !districtFilter || p.district === districtFilter;
+      const matchesDistrict =
+        !districtFilter || (p.district || []).includes(districtFilter);
       const matchesRisk = !riskFilter || p.riskLevel === riskFilter;
       return matchesSearch && matchesState && matchesDistrict && matchesRisk;
     });
 
     result.sort((a, b) => {
-      const valA = a[sortKey] ?? "";
-      const valB = b[sortKey] ?? "";
+      const rawA = a[sortKey];
+      const rawB = b[sortKey];
+      const valA = Array.isArray(rawA) ? rawA.join(", ") : rawA ?? "";
+      const valB = Array.isArray(rawB) ? rawB.join(", ") : rawB ?? "";
       const cmp = String(valA).localeCompare(String(valB), undefined, { numeric: true });
       return sortDir === "asc" ? cmp : -cmp;
     });
 
     return result;
-  }, [projects, search, stateFilter, districtFilter, riskFilter, sortKey, sortDir]);
+  }, [projectsWithRisk, search, stateFilter, districtFilter, riskFilter, sortKey, sortDir]);
 
   const toggleSort = (key) => {
     if (sortKey === key) {
@@ -197,7 +210,9 @@ export default function ProjectList() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-600">{p.state}</td>
-                  <td className="px-4 py-3 text-slate-600">{p.district}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {(p.district || []).join(", ")}
+                  </td>
                   <td className="px-4 py-3">
                     <StatusPill status={p.status} />
                   </td>

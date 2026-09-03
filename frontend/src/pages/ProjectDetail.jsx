@@ -12,7 +12,7 @@ import ProjectMap from "../components/ProjectMap";
 // actual field names - adjust if they differ.
 const FIELDS = [
   { key: "state", label: "State" },
-  { key: "district", label: "District" },
+  { key: "district", label: "Districts" },
   { key: "landArea", label: "Land Area" },
   { key: "affectedFamilies", label: "Affected Families" },
   { key: "compensationStatus", label: "Compensation Status", pill: true },
@@ -103,7 +103,11 @@ export default function ProjectDetails() {
               {pill ? (
                 <StatusPill status={project[key]} />
               ) : (
-                <div className="text-sm text-slate-800">{project[key] ?? "—"}</div>
+                <div className="text-sm text-slate-800">
+                  {Array.isArray(project[key])
+                    ? project[key].join(", ") || "—"
+                    : project[key] ?? "—"}
+                </div>
               )}
             </div>
           ))}

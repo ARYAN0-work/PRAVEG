@@ -3,8 +3,9 @@ import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
 import Dashboard from "./pages/Dashboard";
 import ProjectList from "./pages/ProjectList";
-import ProjectDetails from "./pages/ProjectDetails";
+import ProjectDetails from "./pages/ProjectDetail";
 import ProjectForm from "./pages/ProjectForm";
+import "./index.css"
 
 // Maps the current route to a Topbar title, so the title stays correct
 // without every page having to know about/set it itself. More specific

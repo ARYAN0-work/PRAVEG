@@ -11,7 +11,7 @@ const EMPTY_FORM = {
   name: "",
   type: "",
   state: "",
-  district: "",
+  district: [],
   landArea: "",
   affectedFamilies: "",
   compensationStatus: "Not Started",
@@ -49,7 +49,9 @@ export default function ProjectForm() {
     const next = {};
     if (!form.name.trim()) next.name = "Project name is required.";
     if (!form.state.trim()) next.state = "State is required.";
-    if (!form.district.trim()) next.district = "District is required.";
+    if (!form.district || form.district.length === 0) {
+      next.district = "At least one district is required.";
+    }
     if (form.affectedFamilies && Number.isNaN(Number(form.affectedFamilies))) {
       next.affectedFamilies = "Must be a number.";
     }
@@ -147,11 +149,11 @@ export default function ProjectForm() {
             />
           </Field>
 
-          <Field label="District" error={errors.district}>
-            <input
+          <Field label="Districts" error={errors.district} span={2}>
+            <DistrictTagInput
               value={form.district}
-              onChange={(e) => handleChange("district", e.target.value)}
-              className={inputClass("district")}
+              onChange={(val) => handleChange("district", val)}
+              hasError={Boolean(errors.district)}
             />
           </Field>
 
@@ -258,5 +260,75 @@ function Field({ label, error, span, children }) {
   );
 }
 
+// Lets a project span multiple districts: type a name, press Enter (or
+// click Add) to turn it into a removable chip. `value` is always an array.
+function DistrictTagInput({ value, onChange, hasError }) {
+  const [draft, setDraft] = useState("");
 
- 
+  const addDistrict = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    if (value.some((d) => d.toLowerCase() === trimmed.toLowerCase())) {
+      setDraft("");
+      return; // no duplicates
+    }
+    onChange([...value, trimmed]);
+    setDraft("");
+  };
+
+  const removeDistrict = (name) => {
+    onChange(value.filter((d) => d !== name));
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addDistrict();
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a district and press Enter"
+          className={`flex-1 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A227] ${
+            hasError ? "border-red-400" : "border-slate-200"
+          }`}
+        />
+        <button
+          type="button"
+          onClick={addDistrict}
+          className="px-3 py-2 text-sm rounded-md border border-slate-200 hover:bg-slate-50"
+        >
+          Add
+        </button>
+      </div>
+
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {value.map((d) => (
+            <span
+              key={d}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200"
+            >
+              {d}
+              <button
+                type="button"
+                onClick={() => removeDistrict(d)}
+                aria-label={`Remove ${d}`}
+                className="text-slate-400 hover:text-red-600"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
