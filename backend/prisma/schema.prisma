@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DelayRisk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Project {
+  id                         String           @id @default(uuid())
+  sourceProjectId String? @unique
+
+  name                       String
+  projectType                String
+  state                      String
+  districts                  Json
+
+  landAreaHectares           Float?
+  affectedFamilies           Int?
+  budgetAllocatedCrore       Float?
+  compensationPaidPercent    Float?
+  compensationStatus         String?
+
+  legalDisputes              Int?
+  possessionPercent          Float?
+
+  stakeholderResponsePercent Float?
+  stakeholderResponsiveness  String?
+
+  historicalPerformance      Float?
+
+  predictions                RiskPrediction[]
+
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+}
+
+model RiskPrediction {
+  id                 String    @id @default(uuid())
+  projectId          String
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  delayRisk          DelayRisk
+  riskScore          Int
+  confidence         Float
+  lowProbability     Float
+  mediumProbability  Float
+  highProbability   Float
+  reason             String
+  riskFactors        Json
+  recommendations    Json
+  modelVersion       String
+  createdAt          DateTime  @default(now())
+
+  @@index([projectId, createdAt])
+}
