@@ -4,82 +4,59 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DelayRisk {
+  LOW
+  MEDIUM
+  HIGH
 }
 
 model Project {
-  id String @id @default(uuid())
+  id                         String           @id @default(uuid())
+  sourceProjectId String? @unique
 
-  // Original Excel identity
-  sourceProjectId String @unique
+  name                       String
+  projectType                String
+  state                      String
+  districts                  Json
 
-  name        String
-  projectType String
-  state       String
+  landAreaHectares           Float?
+  affectedFamilies           Int?
+  budgetAllocatedCrore       Float?
+  compensationPaidPercent    Float?
+  compensationStatus         String?
 
-  landArea         Decimal? @db.Decimal(14, 2)
-  affectedFamilies Int?
+  legalDisputes              Int?
+  possessionPercent          Float?
 
-  stakeholderResponsiveness Decimal? @db.Decimal(10, 2)
-  historicalPerformance     Decimal? @db.Decimal(10, 2)
+  stakeholderResponsePercent Float?
+  stakeholderResponsiveness  String?
 
-  districts     Json?
-  districtCount Int?
+  historicalPerformance      Float?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  predictions                RiskPrediction[]
 
-  statuses ProjectStatus[]
-
-  @@index([state])
-  @@index([projectType])
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
 }
 
-model ProjectStatus {
-  id String @id @default(uuid())
+model RiskPrediction {
+  id                 String    @id @default(uuid())
+  projectId          String
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  delayRisk          DelayRisk
+  riskScore          Int
+  confidence         Float
+  lowProbability     Float
+  mediumProbability  Float
+  highProbability   Float
+  reason             String
+  riskFactors        Json
+  recommendations    Json
+  modelVersion       String
+  createdAt          DateTime  @default(now())
 
-  // Original Excel identity
-  sourceProjectId String
-
-  // Original Sheet2 row number.
-  // This preserves duplicate-looking rows from Excel.
-  sourceRowNumber Int
-
-  sourceProjectName String
-  sourceProjectType String
-
-  // Nullable because P068 contains an identity mismatch
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  budgetAllocatedCrore Decimal? @db.Decimal(18, 2)
-
-  // Compensation is mixed in the source:
-  // some rows contain amounts, others contain statuses.
-  compensationAmountCrore Decimal?
-  compensationStatus      String?
-
-  approvalTimelines String?
-  legalDisputes     String?
-
-  // Source contains numeric/progress-style values.
-  possessionStatus Decimal? @db.Decimal(10, 4)
-
-  rehabilitationStatus String?
-  delayStatus          String?
-
-  targetCompletion DateTime?
-
-  // Some rows contain actual Excel dates,
-  // others contain year-only values such as 2023.
-  snapshotDate DateTime?
-  snapshotYear Int?
-
-  createdAt DateTime @default(now())
-
-  // One Excel source row = one unique imported status record.
-  @@unique([sourceProjectId, sourceRowNumber])
-  @@index([sourceProjectId])
-  @@index([projectId])
-  @@index([snapshotDate])
-  @@index([snapshotYear])
+  @@index([projectId, createdAt])
 }
