@@ -23,6 +23,9 @@ importers:
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5
+      zod:
+        specifier: ^4.6.4
+        version: 4.6.4
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -822,6 +825,9 @@ packages:
     engines: {node: '>=0.8'}
     hasBin: true
 
+  zod@4.6.4:
+    resolution: {integrity: sha512-AXSD6hvGdvRjajG/l1cC+d6IrhH+sjmPKtYeQdJIK8MFJl3LyClzS+o/YsVC+zQZPupAaeH5skwwm8YqYH7BqA==}
+
 snapshots:
 
   '@esbuild/aix-ppc64@0.28.2':
@@ -1544,3 +1550,5 @@ snapshots:
       ssf: 0.11.2
       wmf: 1.0.2
       word: 0.3.0
+
+  zod@4.6.4: {}
