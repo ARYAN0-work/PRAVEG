@@ -1,9 +1,8 @@
 import "dotenv/config";
 import app from "./app.js";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./lib/prisma.js";
 
 const PORT = Number(process.env.PORT ?? 5000);
-const prisma = new PrismaClient();
 
 async function start() {
   await prisma.$connect();

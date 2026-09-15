@@ -1,12 +1,11 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./lib/prisma.js";
 import { explainPrediction, requestPrediction } from "./ml.js";
 import { referenceData, responsivenessBand } from "./reference-data.js";
 
 const app = express();
-const prisma = new PrismaClient();
 
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173" }));
 app.use(express.json({ limit: "100kb" }));
