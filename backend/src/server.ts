@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 async function start() {
   await prisma.$connect();
   const server = app.listen(PORT, () => {
-    console.log(`Server is running`);
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 
   const shutdown = async (signal: string) => {

@@ -8,7 +8,15 @@ import { referenceData, responsivenessBand } from "./reference-data.js";
 const app = express();
 const prisma = new PrismaClient();
 
+app.disable("x-powered-by");
+
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173" }));
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
 app.use(express.json({ limit: "100kb" }));
 
 app.get("/health", (req, res) => {
@@ -17,7 +25,6 @@ app.get("/health", (req, res) => {
     message: "PRAVEG backend is running",
   });
 });
-
 type ProjectPayload = {
   name: string;
   projectType: string;
@@ -37,7 +44,7 @@ const projectInclude = { predictions: { orderBy: { createdAt: "desc" }, take: 1 
 
 function asNumber(value: unknown, field: string, errors: string[], options: { min?: number; max?: number; integer?: boolean } = {}) {
   const number = Number(value);
-  if (!Number.isFinite(number) || (options.integer && !Number.isInteger(number)) ||
+  if (value === null || value === undefined || value === "" || !Number.isFinite(number) || (options.integer && !Number.isInteger(number)) ||
       (options.min !== undefined && number < options.min) || (options.max !== undefined && number > options.max)) {
     errors.push(`${field} is invalid.`);
   }
@@ -54,7 +61,7 @@ function validateProject(body: unknown): { data?: ProjectPayload; errors?: strin
   const projectType = String(input.projectType ?? "").trim();
   const state = String(input.state ?? "").trim();
   const districts = Array.isArray(input.districts) ? input.districts.map(String).map((d) => d.trim()).filter(Boolean) : [];
-  if (!name) errors.push("name is required.");
+  if (!name || name.length > 200) errors.push("name must be between 1 and 200 characters.");
   if (!(referenceData.projectTypes as readonly string[]).includes(projectType)) errors.push("projectType must be selected from the approved list.");
   if (!(referenceData.states as readonly string[]).includes(state)) errors.push("state must be selected from the approved list.");
   if (!districts.length || districts.some((d) => !(referenceData.districts as readonly string[]).includes(d))) errors.push("Select at least one valid district.");

@@ -1,0 +1,14 @@
+{
+  "name": "root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "pnpm -C backend dev",
+    "dev:frontend": "pnpm -C frontend dev",
+    "dev:ml": "python -m uvicorn api:app --reload --port 8000 --app-dir ml-api",
+    "dev": "concurrently -k \"pnpm dev:backend\" \"pnpm dev:frontend\" \"pnpm dev:ml\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

@@ -1,9 +1,10 @@
 import XLSX from "xlsx";
 import { PrismaClient } from "@prisma/client";
+import { fileURLToPath } from "node:url";
 
 const prisma = new PrismaClient();
 
-const workbook = XLSX.readFile("../Datastructure.xlsx");
+const workbook = XLSX.readFile(fileURLToPath(new URL("../../ml-api/Datastructure_3.xlsx", import.meta.url)));
 
 const sheet1 = XLSX.utils.sheet_to_json<Record<string, unknown>>(
   workbook.Sheets["Sheet1"],
@@ -130,10 +131,10 @@ function parseSnapshotDate(value: unknown): Date | null {
 }
 
 function buildDistricts(row: Record<string, unknown>): string[] {
-  return Object.keys(row)
+  return [...new Set(Object.keys(row)
     .filter((key) => /^District_\d+$/.test(key))
     .map((key) => String(row[key] ?? "").trim())
-    .filter((value) => value && value.toLowerCase() !== "null");
+    .filter((value) => !isMissing(value)))];
 }
 
 async function main() {
@@ -172,16 +173,14 @@ async function main() {
 
       landAreaHectares: toNumber(row["Land Area"]),
       affectedFamilies: toNumber(row["No. Of affected Families"]),
-      budgetAllocatedCrore: toNumber(snapshot?.["Budget alloted"]),
+      budgetAllocatedCrore: toNumber(snapshot?.["Budget_allotted"]),
 
       // The source does not provide a reliable compensation percentage.
       compensationPaidPercent: null,
 
-      compensationStatus: isMissing(snapshot?.["Compensation_Status"])
-        ? null
-        : String(snapshot?.["Compensation_Status"]).trim(),
+      compensationStatus: null,
 
-      legalDisputes: toNumber(snapshot?.["Legal Disputes"]),
+      legalDisputes: toNumber(row["Legal_Disputes"]),
 
       possessionPercent: normalizePossession(
         snapshot?.["Possesion_status"],

@@ -1,32 +1,28 @@
-import { Bell } from "lucide-react";
+
+import { ShieldCheck } from "lucide-react";
+import RoleSwitcher from "../Roleswitcher";
 
 export default function Topbar({ title = "Dashboard" }) {
   return (
-    <header
-      className="h-16 flex items-center justify-between px-6
-        bg-white border-b-2 border-[#C9A227] shrink-0"
-    >
-      <h1 className="text-lg font-semibold text-[#16233A]">{title}</h1>
+    <header className="flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="hidden rounded-lg bg-[#FFFBEF] p-2 sm:block">
+          <ShieldCheck className="h-4 w-4 text-[#C9A227]" />
+        </div>
+        <h1 className="truncate text-base font-semibold text-[#16233A] sm:text-lg">
+          {title}
+        </h1>
+      </div>
 
-      <div className="flex items-center gap-4">
-        {/* Notifications placeholder - deferred feature, shown disabled */}
-        <button
-          disabled
-          title="Notifications (coming soon)"
-          className="text-slate-300 cursor-not-allowed"
-        >
-          <Bell className="w-5 h-5" />
-        </button>
-
-        {/* User indicator */}
-        <div className="flex items-center gap-2 pl-4 border-l border-slate-200">
-          <div
-            className="w-8 h-8 rounded-full bg-[#16233A] text-white
-              flex items-center justify-center text-xs font-medium"
-          >
+      <div className="flex items-center gap-2 sm:gap-4">
+        <RoleSwitcher />
+        <div className="flex items-center gap-2 border-l border-slate-200 pl-3 sm:pl-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#16233A] text-xs font-medium text-white">
             A
           </div>
-          <span className="text-sm text-[#16233A] font-medium">Admin</span>
+          <span className="hidden text-sm font-medium text-[#16233A] md:block">
+            Admin
+          </span>
         </div>
       </div>
     </header>

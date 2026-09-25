@@ -1,147 +1,313 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { AlertTriangle, ArrowRight, FolderKanban, Gauge, Clock3, MapPin, Activity } from "lucide-react";
 import { getProjects } from "../api/projects";
-import { getMockRisk } from "../mocks/mockRiskData";
+import { useScope } from "../contexts/ScopeContext";
 import StatCard from "../components/StatCard";
 import RiskBadge from "../components/RiskBadge";
 import LoadingState from "../components/LoadingState";
 import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/EmptyState";
+import PortfolioMap from "../components/PortfolioMap";
 
-const RISK_COLORS = { High: "#ef4444", Medium: "#f59e0b", Low: "#10b981" };
+const RISK_COLORS = {
+  High: "#dc2626",
+  Medium: "#d97706",
+  Low: "#15803d",
+};
+
+function getDistricts(project) {
+  return Array.isArray(project?.districts) ? project.districts : [];
+}
+
+function isInScope(project, scope) {
+  if (scope.role === "national") return true;
+  if (scope.role === "state") return project.state === scope.state;
+  if (scope.role === "district") {
+    return (
+      project.state === scope.state &&
+      getDistricts(project).includes(scope.district)
+    );
+  }
+  return true;
+}
 
 export default function Dashboard() {
+  const { scope } = useScope();
   const [projects, setProjects] = useState([]);
-  const [status, setStatus] = useState("loading"); // loading | error | ready
+  const [status, setStatus] = useState("loading");
+  const [error, setError] = useState("");
 
   const fetchProjects = () => {
     setStatus("loading");
     getProjects()
       .then((data) => {
-        setProjects(data);
+        setProjects(Array.isArray(data) ? data : []);
         setStatus("ready");
       })
-      .catch(() => setStatus("error"));
+      .catch((failure) => { setError(failure.message); setStatus("error"); });
   };
 
   useEffect(() => {
-    fetchProjects();
+    let active = true;
+    getProjects().then((data) => {
+      if (!active) return;
+      setProjects(Array.isArray(data) ? data : []);
+      setStatus("ready");
+    }).catch((failure) => { if (active) { setError(failure.message); setStatus("error"); } });
+    return () => { active = false; };
   }, []);
 
-  // Same mock risk source as ProjectList/ProjectDetails, so every number
-  // shown here matches what you'd see clicking into any individual
-  // project. Swapping to the real ML API later = changing getMockRisk's
-  // implementation in one file, not touching this page.
-  const projectsWithRisk = useMemo(
-    () => projects.map((p) => ({ ...p, risk: getMockRisk(p) })),
-    [projects]
+  const scopedProjects = useMemo(
+    () => projects.filter((project) => isInScope(project, scope)),
+    [projects, scope],
   );
 
   const stats = useMemo(() => {
-    const total = projectsWithRisk.length;
     const counts = { High: 0, Medium: 0, Low: 0 };
+    let predicted = 0;
     let scoreSum = 0;
 
-    projectsWithRisk.forEach((p) => {
-      counts[p.risk.level] = (counts[p.risk.level] || 0) + 1;
-      scoreSum += p.risk.score;
+    scopedProjects.forEach((project) => {
+      const prediction = project.latestPrediction;
+      if (!prediction) return;
+
+      const level = prediction.delayRisk;
+      if (level in counts) counts[level] += 1;
+
+      if (Number.isFinite(Number(prediction.riskScore))) {
+        scoreSum += Number(prediction.riskScore);
+        predicted += 1;
+      }
     });
 
-    const avgRisk = total > 0 ? Math.round(scoreSum / total) : 0;
-    return { total, counts, avgRisk };
-  }, [projectsWithRisk]);
+    return {
+      total: scopedProjects.length,
+      pending: scopedProjects.filter((project) => !project.latestPrediction).length,
+      counts,
+      avgRisk: predicted ? Math.round(scoreSum / predicted) : 0,
+    };
+  }, [scopedProjects]);
 
   const distributionData = useMemo(
     () =>
       ["High", "Medium", "Low"]
-        .map((level) => ({ name: level, value: stats.counts[level] || 0 }))
-        .filter((d) => d.value > 0),
-    [stats]
+        .map((level) => ({ name: level, value: stats.counts[level] }))
+        .filter((entry) => entry.value > 0),
+    [stats],
   );
 
   const highRiskProjects = useMemo(
     () =>
-      [...projectsWithRisk]
-        .filter((p) => p.risk.level === "High")
-        .sort((a, b) => b.risk.score - a.risk.score)
+      scopedProjects
+        .filter((project) => project.latestPrediction?.delayRisk === "High")
+        .sort(
+          (a, b) =>
+            (b.latestPrediction?.riskScore ?? 0) -
+            (a.latestPrediction?.riskScore ?? 0),
+        )
         .slice(0, 5),
-    [projectsWithRisk]
+    [scopedProjects],
   );
 
-  if (status === "loading") return <LoadingState label="Loading dashboard..." />;
-  if (status === "error") {
-    return <ErrorState message="Couldn't load dashboard data." onRetry={fetchProjects} />;
+  if (status === "loading") {
+    return <LoadingState label="Loading dashboard..." />;
   }
-  if (stats.total === 0) {
+
+  if (status === "error") {
     return (
-      <EmptyState
-        title="No projects yet"
-        description="Create your first project to see dashboard stats here."
+      <ErrorState
+        message={error || "Couldn't load dashboard data."}
+        onRetry={fetchProjects}
       />
     );
   }
 
+  if (stats.total === 0) {
+    return (
+      <EmptyState
+        title="No projects yet"
+        description="Create your first project to see live project and AI risk statistics here."
+        action={
+          <Link
+            to="/projects/new"
+            className="inline-flex items-center gap-2 rounded-md bg-[#16233A] px-4 py-2 text-sm font-medium text-white hover:bg-[#1E3352]"
+          >
+            Create project <ArrowRight className="h-4 w-4" />
+          </Link>
+        }
+      />
+    );
+  }
+
+  const scopeLabel =
+    scope.role === "national"
+      ? "All projects"
+      : scope.role === "state"
+        ? scope.state
+        : `${scope.district || "All districts"}, ${scope.state}`;
+
   return (
-    <div>
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Projects" value={stats.total} />
-        <StatCard label="High Risk" value={stats.counts.High || 0} accent="#ef4444" />
-        <StatCard label="Medium Risk" value={stats.counts.Medium || 0} accent="#f59e0b" />
-        <StatCard label="Average Risk Score" value={stats.avgRisk} accent="#C9A227" />
+    <div className="mx-auto max-w-[1500px] space-y-6">
+      <section className="overview-hero rounded-3xl p-6 text-white sm:p-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#C9A227]">
+              Executive intelligence
+            </p>
+            <h2 className="mt-1 text-xl font-semibold text-[#16233A]">
+              Land acquisition, in focus.
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Track project exposure and geographic coverage across your portfolio. Risk scores reflect saved model predictions.
+            </p>
+          </div>
+          <div className="text-sm text-slate-500">
+            Viewing <span className="font-medium text-[#16233A]">{scopeLabel}</span>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+        <StatCard label="Total Projects" value={stats.total} icon={FolderKanban} />
+        <StatCard
+          label="High Risk"
+          value={stats.counts.High}
+          accent="#dc2626"
+          icon={AlertTriangle}
+        />
+        <StatCard
+          label="Medium Risk"
+          value={stats.counts.Medium}
+          accent="#d97706"
+          icon={Gauge}
+        />
+        <StatCard
+          label="Low Risk"
+          value={stats.counts.Low}
+          accent="#15803d"
+          icon={Gauge}
+        />
+        <StatCard
+          label="Pending Prediction"
+          value={stats.pending}
+          accent="#C9A227"
+          icon={Clock3}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Risk distribution donut chart */}
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
-          <h2 className="text-sm font-semibold text-[#16233A] mb-4">Risk Distribution</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={distributionData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={50}
-                outerRadius={80}
-                paddingAngle={2}
-              >
-                {distributionData.map((entry) => (
-                  <Cell key={entry.name} fill={RISK_COLORS[entry.name]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+      <section className="surface-card p-5 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div><p className="eyebrow"><MapPin size={13} /> Geographic intelligence</p><h2 className="mt-1 text-xl font-semibold">Portfolio coverage</h2><p className="mt-1 text-sm text-slate-500">Select a district marker to explore its projects.</p></div>
+          <Link to="/projects/new" className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900">Add project <Activity size={15}/></Link>
         </div>
+        <PortfolioMap projects={scopedProjects} height={370} />
+        <p className="mt-3 text-xs text-slate-500">District centre locations are approximate, not land parcel boundaries. Map tiles require internet access. Red is high risk, amber medium, green low, grey pending.</p>
+      </section>
 
-        {/* High-risk project list */}
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
-          <h2 className="text-sm font-semibold text-[#16233A] mb-4">High-Risk Projects</h2>
-          {highRiskProjects.length === 0 ? (
-            <p className="text-sm text-slate-400">No high-risk projects right now.</p>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-[#16233A]">
+              Risk Distribution
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Only saved ML predictions are included.
+            </p>
+          </div>
+
+          {distributionData.length ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={distributionData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={58}
+                  outerRadius={88}
+                  paddingAngle={3}
+                >
+                  {distributionData.map((entry) => (
+                    <Cell key={entry.name} fill={RISK_COLORS[entry.name]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           ) : (
-            <ul className="space-y-1">
-              {highRiskProjects.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    to={`/projects/${p.id}`}
-                    className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-slate-50"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-[#16233A]">{p.name}</div>
-                      <div className="text-xs text-slate-500">
-                        {(p.districts || []).join(", ")}
-                      </div>
-                    </div>
-                    <RiskBadge level={p.risk.level} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="flex h-[250px] items-center justify-center text-sm text-slate-400">
+              No predictions available yet.
+            </div>
           )}
-        </div>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-3">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-[#16233A]">
+                Highest-risk projects
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Ranked by the saved ML risk score.
+              </p>
+            </div>
+            <div className="rounded-lg bg-[#FFFBEF] px-3 py-2 text-right">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                Average score
+              </div>
+              <div className="text-lg font-bold text-[#16233A]">
+                {stats.avgRisk}
+                <span className="text-xs font-medium text-slate-400">/100</span>
+              </div>
+            </div>
+          </div>
+
+          {highRiskProjects.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-200 p-8 text-center">
+              <p className="text-sm font-medium text-slate-700">
+                No high-risk projects in this scope.
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                Projects appear here automatically after an ML prediction is saved.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {highRiskProjects.map((project) => (
+                <Link
+                  key={project.id}
+                  to={`/projects/${project.id}`}
+                  className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3 transition hover:border-[#C9A227]/50 hover:bg-[#FFFBEF]"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-[#16233A]">
+                      {project.name}
+                    </div>
+                    <div className="mt-1 truncate text-xs text-slate-500">
+                      {getDistricts(project).join(", ") || "No district recorded"}
+                    </div>
+                  </div>
+                  <div className="ml-4 flex shrink-0 items-center gap-3">
+                    <span className="text-sm font-semibold text-[#16233A]">
+                      {project.latestPrediction?.riskScore ?? "—"}/100
+                    </span>
+                    <RiskBadge level={project.latestPrediction?.delayRisk} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

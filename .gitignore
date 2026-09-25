@@ -1,5 +1,25 @@
-backend/.env
-**/node_modules/
-**/__pycache__/
-*.pyc
-backend/dist/
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+dist-ssr/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local logs
+*.log

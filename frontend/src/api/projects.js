@@ -4,10 +4,10 @@ async function request(path, options) {
   const response = await fetch(`${API_URL}${path}`, {
     headers: { "Content-Type": "application/json", ...(options?.headers || {}) },
     ...options,
-  });
+  }).catch(() => { throw new Error("Cannot reach the backend. Start PostgreSQL and the backend service, then retry."); });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    const error = new Error(body.message || "Request failed.");
+    const error = new Error(response.status === 502 || response.status === 503 ? "The backend is unavailable. Start PostgreSQL and the backend on port 5000, then retry." : body.message || `Request failed (${response.status}).`);
     error.response = { data: body };
     throw error;
   }

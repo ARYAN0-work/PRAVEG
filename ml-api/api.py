@@ -1,17 +1,29 @@
 from fastapi import FastAPI
-from Predict import predict_delay
+from pydantic import BaseModel
+from predict import predict_project
+app = FastAPI()
 
-app = FastAPI(title="PRAVEG ML API")
-
-
-@app.get("/health")
-def health():
-    return {
-        "status": "ok",
-        "message": "PRAVEG ML API is running"
-    }
+class ProjectData(BaseModel):
+    project_type: str
+    land_area: float
+    affected_families: float
+    stakeholder_responsiveness: str
+    historical_performance: float
+    possession_status: float
+    state: str
 
 
 @app.post("/predict")
-def predict(data: dict):
-    return predict_delay(data)
+def predict(data: ProjectData):
+
+    result = predict_project(
+        project_type=data.project_type,
+        land_area=data.land_area,
+        affected_families=data.affected_families,
+        stakeholder_responsiveness=data.stakeholder_responsiveness,
+        historical_performance=data.historical_performance,
+        possession_status=data.possession_status,
+        state=data.state
+    )
+
+    return result

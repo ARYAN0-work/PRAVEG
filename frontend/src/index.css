@@ -1,1 +1,45 @@
+
 @import "tailwindcss";
+
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: #16233a;
+  background: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  background: #f8fafc;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+.overview-hero { background: radial-gradient(circle at 85% 0%, #e8b04736, transparent 34%), linear-gradient(115deg,#14253f,#31556a); box-shadow: 0 16px 38px -26px #14253f95; }
+.surface-card { background: white; border: 1px solid #e3e9f1; border-radius: 20px; box-shadow: 0 8px 28px -24px #172b46a0; }
+.eyebrow { display: inline-flex; align-items: center; gap: 6px; color: #ad8128; font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.mobile-nav { display: none; }
+@media (max-width: 639px) { .app-sidebar { display: none; } .mobile-nav { position: fixed; z-index: 1000; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; min-height: 64px; background: #16233a; padding-bottom: env(safe-area-inset-bottom); } }

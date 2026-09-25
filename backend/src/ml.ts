@@ -33,21 +33,13 @@ export function buildModelInput(project: ProjectInput) {
       : "Unknown");
 
   return {
-    "Land Area": project.landAreaHectares,
-    "No. Of affected Families": project.affectedFamilies,
-    "Historical Performance": project.historicalPerformance,
-    "Budget alloted": project.budgetAllocatedCrore,
-
-    // The shipped model was trained with monetary compensation values,
-    // not a percentage. Do not map compensationPaidPercent here until
-    // the model is retrained.
-    "Compensation_Status": null,
-
-    "Legal Disputes": project.legalDisputes,
-    "Possesion_status": project.possessionPercent,
-    "Project_type_static": project.projectType,
-    State: project.state,
-    "Stake Holder Responsiveness": stakeholderResponsiveness,
+    project_type: project.projectType,
+    land_area: project.landAreaHectares,
+    affected_families: project.affectedFamilies,
+    stakeholder_responsiveness: stakeholderResponsiveness,
+    historical_performance: project.historicalPerformance,
+    possession_status: project.possessionPercent,
+    state: project.state,
   };
 }
 
@@ -58,6 +50,7 @@ export async function requestPrediction(project: ProjectInput) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(buildModelInput(project)),
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!response.ok) {
